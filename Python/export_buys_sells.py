@@ -83,8 +83,10 @@ def process_range(q,path,beg,end,ex):
                             for k in  range(1,j):
                                 if price[j] > price[j - k]:
                                     lee_ready_class[j] = 1
+                                    break
                                 elif price[j] < price[j - k]:
                                     lee_ready_class[j] = -1
+                                    break
                 #output
                 out_sym = str(symb)
                 out_sym = out_sym[2:len(out_sym)-1]
@@ -102,7 +104,7 @@ if __name__ == '__main__':
     print(qcon)
     print('IPC version: %s. Is connected: %s' % (qcon.protocol_version, qcon.is_connected()))
     start_time = time.time()
-    process_range(qcon,'/storage/share/',numpy.string_('20040501'),numpy.string_('20040601'),'A')
+    process_range(qcon,'/storage/share/',numpy.string_('20040501'),numpy.string_('20040504'),'N')
     elapsed = time.time() - start_time;
     print('classify_trades(qcon,\'A\') took: %d' % elapsed)
     qcon.close()
