@@ -1,1 +1,5 @@
 Python/*.csv
+Doc/*.aux
+Doc/*.log
+Doc/*.pdf
+Doc/*.synctex.gz

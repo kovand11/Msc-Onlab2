@@ -20,15 +20,35 @@
 \section{Modell}
 
 
+\paragraph{Piaci szereplők}
+
+\begin{description}
+	\item[Type A] Description A
+	\item[Type B] Description B
+\end{description}
+
+Poisson eloszlás és magyarázat. 
 
 \section{Implementáció}
 
+\begin{description}
+	\item[Ábra az adatsruktúráról] 
+	\item[Ábra a feldolgozásról]
+\end{description}
+
 \subsection{KDB+}
+
+A projekt alapját képező adathalmaz, mintegy 2.5 terrabájt, egy KDB+ szerveren volt tárolva. Ennek tartalma több évnyi, amerikai tőzsdéken jegyzett vállalatok kereskedési adatai. (T\&Q)
+A fájlok egy része ASCII másik rész bináris formátumban volt elérhető. Az évek során a fájlformátum kis mértékben változott.
 \subsection{Python}
+Az adatbázis lekérdezések automatizálására, és a feladat azon részeire amiket adatbázis-műveletekkel nem lehetett megoldani, egy Python feldolgozó szkriptet hoztam létre. 
 \subsection{Wolfram Mathematica}
+A modell paramétereinek Maximum Likelihood becslőének kiszámításához a Wolfram Research Mathematica szoftverét használtam. Előnye legfőképpen az volt, hogy szimbolikus algebrával dolgozik, numerikus instabilitás nem jelent problémát.
 
 
 \section{Eredmények}
+
+\section{További lehetőségek}
 
 
 \end{document}
