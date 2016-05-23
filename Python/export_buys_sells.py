@@ -3,8 +3,8 @@ import numpy
 import bisect
 import time
 
-#output 20050125.csv minden symb buys sells
-def process_range(q,path,beg,end,ex,symbol_filter):
+#symbolwise only works if symbol_filter has entries
+def process_range(q,path,beg,end,ex,symbol_filter,daywise,symbolwise):
     dates_table = q.sync('`TDATE`CQIDXB`CQIDXE`CTIDXB`CTIDXE`DISK`DATAFMT!("SSSSS S S";8 8 8 8 8 1 1 1 1) 0: (`:/storage/share/egyeb/DATE2_B.DAT)')
 
     dates = dates_table[numpy.string_('TDATE')]
@@ -18,7 +18,6 @@ def process_range(q,path,beg,end,ex,symbol_filter):
     for i in range(len(dates)):
         if beg <= dates[i] < end:
             #open the tind qind partially
-            date = dates[i]#dbg
             dateletter = str(dates[i])[2:8] + str(disk[i])[2]
             tibeg = int(tb[i])
             tiend = int(te[i])
@@ -35,32 +34,34 @@ def process_range(q,path,beg,end,ex,symbol_filter):
             date_str = date_str[2:len(date_str)-1]
             csvfile = open(str(date_str+'.csv'), 'w')
             #for each symbol (possible filtering later)
-            for i in range(0, len(symbol_index)):
-                symb = symbol_index[i][0]
+            for j in range(0, len(symbol_index)):
+                symb = symbol_index[j][0]
                 if symb in symbol_filter or len(symbol_filter)==0:
-                    t_rec_len = 29
-                    q_rec_len = 39
-                    tbeg = symbol_index[i][1]
-                    tend = symbol_index[i][2]
-                    qbeg = symbol_index[i][3]
-                    qend = symbol_index[i][4]
-                    print("%s: %d/%d procesing: %s" % (date_str,i, len(symbol_index), symb))
+                    t_rec_len_2 = 29
+                    q_rec_len_2 = 39
+                    t_rec_len_3 = 19
+                    q_rec_len_3 = 27
+                    tbeg = symbol_index[j][1]
+                    tend = symbol_index[j][2]
+                    qbeg = symbol_index[j][3]
+                    qend = symbol_index[j][4]
+                    print("%s: %d/%d procesing: %s" % (date_str,j, len(symbol_index), symb))
                     # loading corresponding part of the binary files server side
-                    if fmt==2:
+                    if fmt[i] == numpy.string_('2'):
                         q.sync(
                             'ctb_table:flip `TTIM`PRICE`SIZ`TSEQ`G127`CORR`COND`EX!("ijiihhsc";4 8 4 4 2 2 4 1) 1: (`:%sT%s.BIN,%s,%s)' % (
-                                path, dateletter, (tbeg - 1) * t_rec_len, (tend - tbeg) * t_rec_len))
+                                path, dateletter, (tbeg - 1) * t_rec_len_2, (tend - tbeg) * t_rec_len_2))
                         q.sync(
                             'ctq_table:flip `QTIM`BID`OFR`QSEQ`BIDSIZE`OFRSIZ`MODE`EX`MMID!("ijjiiihcs";4 8 8 4 4 4 2 1 4) 1: (`:%sQ%s.BIN,%s,%s)' % (
-                                path, dateletter, (qbeg - 1) * q_rec_len, (qend - qbeg) * q_rec_len))
+                                path, dateletter, (qbeg - 1) * q_rec_len_2, (qend - qbeg) * q_rec_len_2))
                         #load the relevant data from a specific exchange
-                    elif fmt==3:
+                    elif fmt[i] == numpy.string_('3'):
                         q.sync(
-                            'ctb_table:flip `TTIM`PRICE`SIZ`G127`CORR`COND`EX!("ijiihhsc";4 4 4 2 2 2 1) 1: (`:%sT%s.BIN,%s,%s)' % (
-                                path, dateletter, (tbeg - 1) * t_rec_len, (tend - tbeg) * t_rec_len))
+                            'ctb_table:flip `TTIM`PRICE`SIZ`G127`CORR`COND`EX!("iiihhsc";4 4 4 2 2 2 1) 1: (`:%sT%s.BIN,%s,%s)' % (
+                                path, dateletter, (tbeg - 1) * t_rec_len_3, (tend - tbeg) * t_rec_len_3))
                         q.sync(
-                            'ctq_table:flip `QTIM`BID`OFR`BIDSIZE`OFRSIZ`MODE`EX`MMID!("ijjiiihcs";4 4 4 4 4 2 1 4) 1: (`:%sQ%s.BIN,%s,%s)' % (
-                                path, dateletter, (qbeg - 1) * q_rec_len, (qend - qbeg) * q_rec_len))
+                            'ctq_table:flip `QTIM`BID`OFR`BIDSIZE`OFRSIZ`MODE`EX`MMID!("iiiiihcs";4 4 4 4 4 2 1 4) 1: (`:%sQ%s.BIN,%s,%s)' % (
+                                path, dateletter, (qbeg - 1) * q_rec_len_3, (qend - qbeg) * q_rec_len_3))
 
                     q.sync('t_sym_ex:`TTIM xasc select TTIM,PRICE from ctb_table where EX="%s"' % ex)
                     q.sync('q_sym_ex:`QTIM xasc select QTIM,BID,OFR from ctq_table where EX="%s"' % ex)
@@ -78,24 +79,24 @@ def process_range(q,path,beg,end,ex,symbol_filter):
                     lofr = [None] * len(ttim)
                     lee_ready_class = [None] * len(ttim)
                     #Lee-Ready classification
-                    for j in range(0, len(ttim)):
-                        ind = bisect.bisect_left(qtim, ttim[j] - 5)  # best bid and ofr from 5 sec before
-                        lee_ready_class[j] = 0
+                    for k in range(0, len(ttim)):
+                        ind = bisect.bisect_left(qtim, ttim[k] - 5)  # best bid and ofr from 5 sec before
+                        lee_ready_class[k] = 0
                         if ind != 0:
-                            lbid[j] = bid[ind - 1]
-                            lofr[j] = ofr[ind - 1]
-                            avg = (lbid[j] + lofr[j]) / 2
-                            if price[j] > avg:
-                                lee_ready_class[j] = 1
-                            elif price[j] < avg:
-                                lee_ready_class[j] = -1
+                            lbid[k] = bid[ind - 1]
+                            lofr[k] = ofr[ind - 1]
+                            avg = (lbid[k] + lofr[k]) / 2
+                            if price[k] > avg:
+                                lee_ready_class[k] = 1
+                            elif price[k] < avg:
+                                lee_ready_class[k] = -1
                             else:
-                                for k in  range(1,j):
-                                    if price[j] > price[j - k]:
-                                        lee_ready_class[j] = 1
+                                for l in  range(1,k):
+                                    if price[k] > price[k - l]:
+                                        lee_ready_class[k] = 1
                                         break
-                                    elif price[j] < price[j - k]:
-                                        lee_ready_class[j] = -1
+                                    elif price[k] < price[k - l]:
+                                        lee_ready_class[k] = -1
                                         break
                     #generating output an output line: symbol,buy,sell,unclassified
                     out_sym = str(symb)
@@ -121,7 +122,7 @@ if __name__ == '__main__':
     symbol_filter.append(numpy.string_('IBM'))
     symbol_filter.append(numpy.string_('JNJ'))
     symbol_filter.append(numpy.string_('PFE'))
-    process_range(qcon,'/storage/share/',numpy.string_('20040501'),numpy.string_('20040504'),'N',symbol_filter)
+    process_range(qcon,'/storage/share/',numpy.string_('20050101'),numpy.string_('20051231'),'N',symbol_filter,daywise = True,symbolwise = True)
     elapsed = time.time() - start_time;
     print('classify_trades(qcon,\'A\') took: %d' % elapsed)
     qcon.close()
