@@ -15,6 +15,14 @@ def process_range(q,path,beg,end,ex,symbol_filter,daywise,symbolwise):
     disk = dates_table[numpy.string_('DISK')]
     fmt = dates_table[numpy.string_('DATAFMT')]
 
+    if symbolwise:
+        filemap = dict.fromkeys(symbol_filter)
+        for s in filemap.keys():
+            s_str = str(s)
+            s_str = s_str[2:len(s_str) - 1]
+            print(s_str)
+            filemap[s] = open(str(s_str + '.csv'), 'w')
+
     for i in range(len(dates)):
         if beg <= dates[i] < end:
             #open the tind qind partially
@@ -24,6 +32,8 @@ def process_range(q,path,beg,end,ex,symbol_filter,daywise,symbolwise):
             qibeg = int(qb[i])
             qiend = int(qe[i])
             index_len = 22;
+
+
             #load the trade index file
             q.sync('ctx_table:flip `SYMBOL`TDATE`TBEGREC`TENDREC!("siii";10 4 4 4) 1: (`:%sT%s.IDX,%d,%d)' % (path,dateletter,(tibeg-1)*index_len,(tiend-tibeg)*index_len))
             #load the quote index file
@@ -36,8 +46,7 @@ def process_range(q,path,beg,end,ex,symbol_filter,daywise,symbolwise):
             if daywise:
                 csvfile = open(str(date_str+'.csv'), 'w')
 
-            if symbolwise:
-                print(1)
+
 
 
             #for each symbol (possible filtering later)
@@ -79,6 +88,7 @@ def process_range(q,path,beg,end,ex,symbol_filter,daywise,symbolwise):
                     q_sym_ex = q.sync('flip q_sym_ex')
                     qtim = q_sym_ex[numpy.string_('QTIM')]
                     if len(qtim) < 2:
+                        print('ERROR: No sufficient amount of quotes')
                         continue
                     bid = q_sym_ex[numpy.string_('BID')]
                     ofr = q_sym_ex[numpy.string_('OFR')]
@@ -114,9 +124,22 @@ def process_range(q,path,beg,end,ex,symbol_filter,daywise,symbolwise):
                     out_sell = str(lee_ready_class.count(-1));
                     out_buy = str(lee_ready_class.count(1));
                     out_unclass = str(lee_ready_class.count(0));
-                    csvfile.write(out_sym+','+out_buy+','+out_sell+','+out_unclass+'\n')
 
-            csvfile.close()
+                    if daywise:
+                        csvfile.write(out_sym+','+out_buy+','+out_sell+','+out_unclass+'\n')
+
+
+
+                    print(out_buy)
+                    if symbolwise:
+                        filemap[symb].write(date_str+','+out_buy+','+out_sell+','+out_unclass+'\n')
+
+            if daywise:
+                csvfile.close()
+
+    if symbolwise:
+        for s in filemap.keys():
+            filemap[s].close()
 
     return
 
@@ -127,12 +150,13 @@ if __name__ == '__main__':
     print('IPC version: %s. Is connected: %s' % (qcon.protocol_version, qcon.is_connected()))
     start_time = time.time()
     symbol_filter = []
-    symbol_filter.append(numpy.string_('XOM'))
-    symbol_filter.append(numpy.string_('WMT'))
-    symbol_filter.append(numpy.string_('IBM'))
-    symbol_filter.append(numpy.string_('JNJ'))
-    symbol_filter.append(numpy.string_('PFE'))
-    process_range(qcon,'/storage/share/',numpy.string_('20060101'),numpy.string_('20070101'),'N',symbol_filter,daywise = True,symbolwise = False)
+    #symbol_filter.append(numpy.string_('XOM'))
+    #symbol_filter.append(numpy.string_('WMT'))
+    #symbol_filter.append(numpy.string_('IBM'))
+    #symbol_filter.append(numpy.string_('JNJ'))
+    #symbol_filter.append(numpy.string_('PFE'))
+    symbol_filter.append(numpy.string_('AAPL'))
+    process_range(qcon,'/storage/share/',numpy.string_('20040501'),numpy.string_('20040505'),'A',symbol_filter,daywise = False,symbolwise = True)
     elapsed = time.time() - start_time;
     print('classify_trades(qcon,\'A\') took: %d' % elapsed)
     qcon.close()

@@ -76,7 +76,7 @@ def classify_trades(q,ex):
 	
 
 if __name__ == '__main__':
-    qcon = qconnection.QConnection(host='localhost', port=5000) #bme-host = f1.finance.bme.hu
+    qcon = qconnection.QConnection(host='f1.finance.bme.hu', port=5001) #bme-host = f1.finance.bme.hu
     qcon.open()
     print(qcon)
     print('IPC version: %s. Is connected: %s' % (qcon.protocol_version, qcon.is_connected()))
