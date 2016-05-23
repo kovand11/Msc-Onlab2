@@ -32,7 +32,14 @@ def process_range(q,path,beg,end,ex,symbol_filter,daywise,symbolwise):
             symbol_index = q.sync('select SYMBOL,TBEG:TBEGREC,TEND:TENDREC,QBEG:QBEGREC,QEND:QENDREC from ctx_table ij (`SYMBOL xkey cqx_table)')
             date_str = str(dates[i])
             date_str = date_str[2:len(date_str)-1]
-            csvfile = open(str(date_str+'.csv'), 'w')
+
+            if daywise:
+                csvfile = open(str(date_str+'.csv'), 'w')
+
+            if symbolwise:
+                print(1)
+
+
             #for each symbol (possible filtering later)
             for j in range(0, len(symbol_index)):
                 symb = symbol_index[j][0]
@@ -62,6 +69,9 @@ def process_range(q,path,beg,end,ex,symbol_filter,daywise,symbolwise):
                         q.sync(
                             'ctq_table:flip `QTIM`BID`OFR`BIDSIZE`OFRSIZ`MODE`EX`MMID!("iiiiihcs";4 4 4 4 4 2 1 4) 1: (`:%sQ%s.BIN,%s,%s)' % (
                                 path, dateletter, (qbeg - 1) * q_rec_len_3, (qend - qbeg) * q_rec_len_3))
+                    else:
+                        print ('ERROR: unknown format: %s' % fmt[i])
+                        continue
 
                     q.sync('t_sym_ex:`TTIM xasc select TTIM,PRICE from ctb_table where EX="%s"' % ex)
                     q.sync('q_sym_ex:`QTIM xasc select QTIM,BID,OFR from ctq_table where EX="%s"' % ex)
@@ -122,7 +132,7 @@ if __name__ == '__main__':
     symbol_filter.append(numpy.string_('IBM'))
     symbol_filter.append(numpy.string_('JNJ'))
     symbol_filter.append(numpy.string_('PFE'))
-    process_range(qcon,'/storage/share/',numpy.string_('20050101'),numpy.string_('20051231'),'N',symbol_filter,daywise = True,symbolwise = True)
+    process_range(qcon,'/storage/share/',numpy.string_('20060101'),numpy.string_('20070101'),'N',symbol_filter,daywise = True,symbolwise = False)
     elapsed = time.time() - start_time;
     print('classify_trades(qcon,\'A\') took: %d' % elapsed)
     qcon.close()
