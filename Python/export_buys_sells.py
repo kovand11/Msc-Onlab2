@@ -46,13 +46,22 @@ def process_range(q,path,beg,end,ex,symbol_filter):
                     qend = symbol_index[i][4]
                     print("%s: %d/%d procesing: %s" % (date_str,i, len(symbol_index), symb))
                     # loading corresponding part of the binary files server side
-                    q.sync(
-                        'ctb_table:flip `TTIM`PRICE`SIZ`TSEQ`G127`CORR`COND`EX!("ijiihhsc";4 8 4 4 2 2 4 1) 1: (`:%sT%s.BIN,%s,%s)' % (
-                        path,dateletter,(tbeg - 1) * t_rec_len, (tend - tbeg) * t_rec_len))
-                    q.sync(
-                        'ctq_table:flip `QTIM`BID`OFR`QSEQ`BIDSIZE`OFRSIZ`MODE`EX`MMID!("ijjiiihcs";4 8 8 4 4 4 2 1 4) 1: (`:%sQ%s.BIN,%s,%s)' % (
-                        path,dateletter,(qbeg - 1) * q_rec_len, (qend - qbeg) * q_rec_len))
-                    #load the relevant data from a specific exchange
+                    if fmt==2:
+                        q.sync(
+                            'ctb_table:flip `TTIM`PRICE`SIZ`TSEQ`G127`CORR`COND`EX!("ijiihhsc";4 8 4 4 2 2 4 1) 1: (`:%sT%s.BIN,%s,%s)' % (
+                                path, dateletter, (tbeg - 1) * t_rec_len, (tend - tbeg) * t_rec_len))
+                        q.sync(
+                            'ctq_table:flip `QTIM`BID`OFR`QSEQ`BIDSIZE`OFRSIZ`MODE`EX`MMID!("ijjiiihcs";4 8 8 4 4 4 2 1 4) 1: (`:%sQ%s.BIN,%s,%s)' % (
+                                path, dateletter, (qbeg - 1) * q_rec_len, (qend - qbeg) * q_rec_len))
+                        #load the relevant data from a specific exchange
+                    elif fmt==3:
+                        q.sync(
+                            'ctb_table:flip `TTIM`PRICE`SIZ`G127`CORR`COND`EX!("ijiihhsc";4 4 4 2 2 2 1) 1: (`:%sT%s.BIN,%s,%s)' % (
+                                path, dateletter, (tbeg - 1) * t_rec_len, (tend - tbeg) * t_rec_len))
+                        q.sync(
+                            'ctq_table:flip `QTIM`BID`OFR`BIDSIZE`OFRSIZ`MODE`EX`MMID!("ijjiiihcs";4 4 4 4 4 2 1 4) 1: (`:%sQ%s.BIN,%s,%s)' % (
+                                path, dateletter, (qbeg - 1) * q_rec_len, (qend - qbeg) * q_rec_len))
+
                     q.sync('t_sym_ex:`TTIM xasc select TTIM,PRICE from ctb_table where EX="%s"' % ex)
                     q.sync('q_sym_ex:`QTIM xasc select QTIM,BID,OFR from ctq_table where EX="%s"' % ex)
                     t_sym_ex = q.sync('flip t_sym_ex')
@@ -107,7 +116,11 @@ if __name__ == '__main__':
     print('IPC version: %s. Is connected: %s' % (qcon.protocol_version, qcon.is_connected()))
     start_time = time.time()
     symbol_filter = []
-    symbol_filter.append(numpy.string_('MSFT'))
+    symbol_filter.append(numpy.string_('XOM'))
+    symbol_filter.append(numpy.string_('WMT'))
+    symbol_filter.append(numpy.string_('IBM'))
+    symbol_filter.append(numpy.string_('JNJ'))
+    symbol_filter.append(numpy.string_('PFE'))
     process_range(qcon,'/storage/share/',numpy.string_('20040501'),numpy.string_('20040504'),'N',symbol_filter)
     elapsed = time.time() - start_time;
     print('classify_trades(qcon,\'A\') took: %d' % elapsed)
