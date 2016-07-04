@@ -58,7 +58,7 @@ def classify_trades(q,ex):
                     elif price[j] < price[j-1]:
                         lee_ready_class[j] = 'blue'
 
-        if len(ttim)>5000000 and True:
+        if len(ttim)>500 and True:
             plt.suptitle(symb)
             plt.scatter(ttim,price,color = lee_ready_class)
             #plt.plot(ttim,price,'ro-',color = 'green')
@@ -76,15 +76,14 @@ def classify_trades(q,ex):
 	
 
 if __name__ == '__main__':
-    qcon = qconnection.QConnection(host='f1.finance.bme.hu', port=5001) #bme-host = f1.finance.bme.hu
+    qcon = qconnection.QConnection(host='localhost', port=5000) #bme-host = f1.finance.bme.hu
     qcon.open()
     print(qcon)
     print('IPC version: %s. Is connected: %s' % (qcon.protocol_version, qcon.is_connected()))
     start_time = time.time()
-    classify_trades(qcon,'A');
+    classify_trades(qcon,'N');
     elapsed = time.time() - start_time;
     print('classify_trades(qcon,\'A\') took: %d' % elapsed)
     qcon.close()
-    plot_test()
 
 #set
